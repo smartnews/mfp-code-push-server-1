@@ -4,47 +4,28 @@ services:
   redis:
     image: redis:latest
     container_name: redis
-    command: redis-server --bind 0.0.0.0
     ports:
-      - "6379:6379"
-    networks:
-      - codepush-network
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 5s
-      timeout: 3s
-      retries: 5
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
-
-  codepush-server:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: codepush-server
-    ports:
-      - "8443:8443"
+      - "${REDIS_PORT:-6379}:6379"
     environment:
       - REDIS_HOST=${REDIS_HOST}
       - REDIS_PORT=${REDIS_PORT}
       - REDIS_KEY=${REDIS_KEY}
-    depends_on:
-      redis:
-        condition: service_healthy
-    networks:
-      - codepush-network
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
+    volumes:
+      - redis-data:/data
 
-networks:
-  codepush-network:
-    driver: bridge
+  codepush-server:
+    build: .
+    ports:
+      - "${PORT:-8443}:8443"
+    environment:
+      - NODE_ENV=${NODE_ENV:-development}
+      - REDIS_HOST=redis
+      - REDIS_PORT=${REDIS_PORT:-6379}
+    depends_on:
+      - redis
+    volumes:
+      - .:/app
+      - /app/node_modules
 
 volumes:
   redis-data:

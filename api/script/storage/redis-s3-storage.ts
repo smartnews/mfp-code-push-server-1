@@ -53,7 +53,7 @@ export class RedisS3Storage implements storage.Storage {
   private updatesDir: string = path.join(__dirname, "updates");
 
   constructor() {
-    this.redisClient = new Redis();
+    this.redisClient = new Redis(parseInt(process.env.REDIS_PORT), process.env.REDIS_HOST);
     this.s3Client = new S3Client({
       region: process.env.AWS_REGION,
       credentials: {
